@@ -28,10 +28,12 @@ export async function POST(request) {
     const cookieName = `zc_oauth_${state.slice(0, 8)}`;
 
     const scopes = [
+      "ZohoCatalyst.projects.ALL",
       "ZohoCatalyst.projects.users.CREATE",
       "ZohoCatalyst.projects.users.READ",
       "ZohoCatalyst.projects.users.DELETE",
       "ZohoCatalyst.email.CREATE",
+      "AaaServer.profile.READ",
     ].join(",");
 
     const authParams = new URLSearchParams({

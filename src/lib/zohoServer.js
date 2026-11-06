@@ -60,7 +60,7 @@ export function parseSafeZohoJson(rawText, status = 200) {
   }
   // Preserve 64-bit Zoho integer IDs as strings before JSON.parse
   const safeText = rawText.replace(
-    /"(user_id|zuid|zaaid|org_id|role_id|ROWID|CREATORID)":\s*(\d{15,})/g,
+    /"(id|project_id|project_domain_id|user_id|zuid|zaaid|org_id|role_id|ROWID|CREATORID)":\s*(\d{15,})/g,
     '"$1": "$2"'
   );
   try {
@@ -97,8 +97,22 @@ export function isCatalystTokenError(httpStatus, data) {
   return false;
 }
 
+export function isScopeMismatchError(data) {
+  const errCode = String(
+    data?.data?.error_code || data?.error_code || data?.code || ""
+  ).toUpperCase();
+  if (errCode === "OAUTH_SCOPE_MISMATCH") return true;
+  const msg = String(
+    data?.data?.message || data?.message || data?.error?.message || ""
+  ).toLowerCase();
+  return msg.includes("oauth_scope_mismatch") || msg.includes("scope mismatch");
+}
+
 export function extractCatalystError(data, fallback = "Catalyst API request failed.") {
   if (!data) return fallback;
+  if (isScopeMismatchError(data)) {
+    return "OAuth token is missing required scope permissions (OAUTH_SCOPE_MISMATCH). Click 'Generate Token' in Profile Settings to re-authorize with updated scopes.";
+  }
   if (typeof data.message === "string" && data.message.trim()) return data.message;
   if (typeof data?.data?.message === "string" && data.data.message.trim()) {
     return data.data.message;

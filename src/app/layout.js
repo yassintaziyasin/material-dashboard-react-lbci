@@ -19,10 +19,19 @@ export const metadata = {
     "Enterprise Zoho Catalyst automation console for bulk transactional email dispatch, user provisioning, and directory management.",
 };
 
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("zc_ops_theme_v1");if(t==="light"){document.documentElement.classList.remove("dark");}else{document.documentElement.classList.add("dark");}}catch(e){}})();`;
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} dark`}>
-      <body className="font-sans min-h-screen bg-[#09090B] text-zinc-100">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${jetbrainsMono.variable} dark`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="font-sans min-h-screen bg-[#F4F5F7] text-zinc-900 dark:bg-[#09090B] dark:text-zinc-100">
         {children}
       </body>
     </html>

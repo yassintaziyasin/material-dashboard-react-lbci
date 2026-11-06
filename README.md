@@ -7,6 +7,8 @@ Full-stack **Next.js (SSR + API Route Handlers)** port of the Zoho Catalyst auto
 - **Bulk User Provisioning** — Register Catalyst project users (`platform_type: "web"`) from plain email lists or `email,FirstName,LastName` CSV files.
 - **User Directory & Cleanup** — Paginated user listing with **64-bit integer safe ID parsing**, instant search filter, single-user delete, and multi-select bulk deletion.
 - **Zero-DB Multi-Profile Management** — Profiles persist in browser `localStorage` with 1-click **Backup / Import JSON** (compatible with Cloudflare D1 exports) + stateless server-side OAuth popup flow (`/api/zoho/auth` & `/api/zoho/callback`) supporting all Zoho Data Centers (`.com`, `.eu`, `.in`, `.com.au`, `.jp`, `.ca`, `.uk`).
+- **One-Click Project & Sender Discovery** — Fetch all Catalyst projects (`GET /baas/v1/project` + multi-org support) and project owner/admin sender addresses directly inside Profile Settings.
+- **Sharp Light & Dark Modes** — Flicker-free architectural Alabaster Light Mode and Obsidian Dark Mode with `localStorage` persistence.
 
 ## Deploying to Zoho Catalyst Slate
 

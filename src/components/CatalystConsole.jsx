@@ -16,6 +16,7 @@ import {
   Layers,
   Loader2,
   Mail,
+  Moon,
   Pause,
   Play,
   Plus,
@@ -25,6 +26,7 @@ import {
   Settings2,
   Sparkles,
   Square,
+  Sun,
   Trash2,
   Upload,
   UserPlus,
@@ -37,6 +39,7 @@ import PayloadModal from "@/components/PayloadModal";
 
 const STORAGE_PROFILES_KEY = "zc_ops_profiles_v1";
 const STORAGE_ACTIVE_PROFILE_KEY = "zc_ops_active_profile_v1";
+const STORAGE_THEME_KEY = "zc_ops_theme_v1";
 
 const STARTER_HTML_TEMPLATE = `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 8px; color: #111827;">
   <h2 style="margin: 0 0 12px; font-size: 20px; font-weight: 600;">Hello,</h2>
@@ -122,9 +125,10 @@ function normalizeImportedProfile(raw) {
 }
 
 export default function CatalystConsole() {
-  // Profiles state
+  // Profiles & Theme state
   const [profiles, setProfiles] = useState([]);
   const [activeProfileName, setActiveProfileName] = useState("");
+  const [theme, setTheme] = useState("dark");
   const [hydrated, setHydrated] = useState(false);
 
   // Navigation & Modals
@@ -198,9 +202,14 @@ export default function CatalystConsole() {
     }, 5500);
   }, []);
 
-  // Load saved profiles from localStorage on mount
+  // Load saved profiles & theme from localStorage on mount
   useEffect(() => {
     try {
+      const savedTheme = localStorage.getItem(STORAGE_THEME_KEY);
+      const initialTheme = savedTheme === "light" ? "light" : "dark";
+      setTheme(initialTheme);
+      document.documentElement.classList.toggle("dark", initialTheme === "dark");
+
       const raw = localStorage.getItem(STORAGE_PROFILES_KEY);
       const savedActive = localStorage.getItem(STORAGE_ACTIVE_PROFILE_KEY);
       if (raw) {
@@ -216,6 +225,21 @@ export default function CatalystConsole() {
     } finally {
       setHydrated(true);
     }
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.toggle("dark", next === "dark");
+      }
+      try {
+        localStorage.setItem(STORAGE_THEME_KEY, next);
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
   }, []);
 
   // Persist profiles whenever changed
@@ -1180,7 +1204,7 @@ export default function CatalystConsole() {
       : 100;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#09090B] text-zinc-100">
+    <div className="min-h-screen flex flex-col bg-[#F4F5F7] text-zinc-900 dark:bg-[#09090B] dark:text-zinc-100 transition-colors duration-150">
       {/* Hidden File Inputs */}
       <input
         ref={txtCsvInputRef}
@@ -1213,10 +1237,10 @@ export default function CatalystConsole() {
             }`}
           >
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-zinc-100 tracking-tight">
+              <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 {t.title}
               </p>
-              <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed break-words">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 leading-relaxed break-words">
                 {t.message}
               </p>
             </div>
@@ -1225,7 +1249,7 @@ export default function CatalystConsole() {
               onClick={() =>
                 setToasts((prev) => prev.filter((item) => item.id !== t.id))
               }
-              className="text-zinc-500 hover:text-zinc-200 p-0.5"
+              className="text-zinc-400 hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-200 p-0.5"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -1234,33 +1258,33 @@ export default function CatalystConsole() {
       </div>
 
       {/* Top Architectural Header */}
-      <header className="sticky top-0 z-40 bg-[#09090B]/90 backdrop-blur-md border-b border-zinc-800/90">
+      <header className="sticky top-0 z-40 bg-white/90 dark:bg-[#09090B]/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800/90">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-md bg-gradient-to-b from-blue-500 to-blue-600 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.35)] shrink-0">
+            <div className="w-8 h-8 rounded-md bg-gradient-to-b from-blue-500 to-blue-600 flex items-center justify-center shadow-[0_2px_12px_rgba(37,99,235,0.28)] dark:shadow-[0_0_20px_rgba(59,130,246,0.35)] shrink-0">
               <Layers className="w-4 h-4 text-white" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2.5">
-                <h1 className="text-sm font-semibold tracking-tight text-zinc-100 truncate">
+                <h1 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
                   Catalyst Operations Console
                 </h1>
                 <span
                   className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider border ${
                     jobState === "running"
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
                       : jobState === "paused"
-                      ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                      : "bg-zinc-900 text-zinc-400 border-zinc-800"
+                      ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                      : "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800"
                   }`}
                 >
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
                       jobState === "running"
-                        ? "bg-emerald-400 animate-pulse"
+                        ? "bg-emerald-500 dark:bg-emerald-400 animate-pulse"
                         : jobState === "paused"
-                        ? "bg-amber-400"
-                        : "bg-zinc-500"
+                        ? "bg-amber-500 dark:bg-amber-400"
+                        : "bg-zinc-400 dark:bg-zinc-500"
                     }`}
                   />
                   {jobState}
@@ -1273,11 +1297,34 @@ export default function CatalystConsole() {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              onClick={toggleTheme}
+              title={
+                theme === "dark"
+                  ? "Switch to Light Mode"
+                  : "Switch to Dark Mode"
+              }
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-300 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-800 transition"
+            >
+              {theme === "dark" ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Light</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-zinc-600" />
+                  <span className="hidden sm:inline">Dark</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
               onClick={() => profilesJsonInputRef.current?.click()}
               title="Import profiles from JSON backup"
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition"
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-300 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-800 transition"
             >
-              <Upload className="w-3.5 h-3.5 text-zinc-400" />
+              <Upload className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
               <span>Import</span>
             </button>
 
@@ -1285,9 +1332,9 @@ export default function CatalystConsole() {
               type="button"
               onClick={exportProfilesJson}
               title="Export profiles to JSON backup"
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition"
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-300 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-800 transition"
             >
-              <Download className="w-3.5 h-3.5 text-zinc-400" />
+              <Download className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
               <span>Backup</span>
             </button>
 
@@ -1295,9 +1342,9 @@ export default function CatalystConsole() {
               type="button"
               onClick={resetConsoleState}
               title="Clear counters and event logs"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-300 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-800 transition"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
+              <RotateCcw className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
               <span className="hidden md:inline">Reset State</span>
             </button>
 
@@ -1320,20 +1367,20 @@ export default function CatalystConsole() {
       </header>
 
       {/* Secondary Sub-Bar: Segmented Module Switcher + Quick Profile Selector */}
-      <div className="border-b border-zinc-800/80 bg-[#0C0C10]">
+      <div className="border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/75 dark:bg-[#0C0C10]">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Module Tabs */}
-          <nav className="inline-flex p-1 rounded-lg bg-[#09090B] border border-zinc-800/90 self-start">
+          <nav className="inline-flex p-1 rounded-lg bg-zinc-200/75 dark:bg-[#09090B] border border-zinc-300/80 dark:border-zinc-800/90 self-start">
             <button
               type="button"
               onClick={() => switchWorkspaceTab("email")}
               className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition ${
                 currentTab === "email"
-                  ? "bg-zinc-800/90 text-zinc-100 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-white dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
               }`}
             >
-              <Mail className="w-3.5 h-3.5 text-blue-400" />
+              <Mail className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               <span>Bulk Email Dispatch</span>
             </button>
 
@@ -1342,11 +1389,11 @@ export default function CatalystConsole() {
               onClick={() => switchWorkspaceTab("signup")}
               className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition ${
                 currentTab === "signup"
-                  ? "bg-zinc-800/90 text-zinc-100 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-white dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
               }`}
             >
-              <UserPlus className="w-3.5 h-3.5 text-emerald-400" />
+              <UserPlus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Bulk User Signup</span>
             </button>
 
@@ -1355,11 +1402,11 @@ export default function CatalystConsole() {
               onClick={() => switchWorkspaceTab("users")}
               className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition ${
                 currentTab === "users"
-                  ? "bg-zinc-800/90 text-zinc-100 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-white dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
               }`}
             >
-              <Users className="w-3.5 h-3.5 text-amber-400" />
+              <Users className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>User Directory</span>
             </button>
           </nav>
@@ -1375,7 +1422,7 @@ export default function CatalystConsole() {
                 onClick={() => stepProfile(-1)}
                 disabled={profiles.length <= 1 || jobState !== "idle"}
                 title="Previous profile"
-                className="p-1.5 rounded-md bg-[#09090B] hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-zinc-100 disabled:opacity-40 transition"
+                className="p-1.5 rounded-md bg-white hover:bg-zinc-100 dark:bg-[#09090B] dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-800 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 disabled:opacity-40 transition"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
@@ -1394,7 +1441,7 @@ export default function CatalystConsole() {
                     // ignore
                   }
                 }}
-                className="bg-[#09090B] border border-zinc-800 rounded-md px-3 py-1.5 text-xs font-mono text-zinc-200 min-w-[210px] outline-none focus:border-blue-500/70"
+                className="bg-white dark:bg-[#09090B] border border-zinc-300 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs font-mono text-zinc-800 dark:text-zinc-200 min-w-[210px] outline-none focus:border-blue-600 dark:focus:border-blue-500/70"
               >
                 {profiles.length === 0 ? (
                   <option value="">No profiles configured — click +</option>
@@ -1413,7 +1460,7 @@ export default function CatalystConsole() {
                 onClick={() => stepProfile(1)}
                 disabled={profiles.length <= 1 || jobState !== "idle"}
                 title="Next profile"
-                className="p-1.5 rounded-md bg-[#09090B] hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-zinc-100 disabled:opacity-40 transition"
+                className="p-1.5 rounded-md bg-white hover:bg-zinc-100 dark:bg-[#09090B] dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-800 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 disabled:opacity-40 transition"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -1425,7 +1472,7 @@ export default function CatalystConsole() {
                   setProfileModalOpen(true);
                 }}
                 title="Add new profile"
-                className="p-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-blue-400 hover:text-blue-300 transition"
+                className="p-1.5 rounded-md bg-white hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-800 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -1440,7 +1487,7 @@ export default function CatalystConsole() {
         <section className="lg:col-span-5 space-y-5">
           <div className="panel-surface rounded-lg p-5 space-y-4">
             {/* Active Profile Metadata Strip */}
-            <div className="flex items-center justify-between gap-2 pb-3.5 border-b border-zinc-800/80">
+            <div className="flex items-center justify-between gap-2 pb-3.5 border-b border-zinc-200 dark:border-zinc-800/80">
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                   {currentTab === "email"
@@ -1449,7 +1496,7 @@ export default function CatalystConsole() {
                     ? "User Provisioning Parameters"
                     : "Project Directory Controls"}
                 </p>
-                <p className="text-xs font-mono text-zinc-400 truncate mt-0.5">
+                <p className="text-xs font-mono text-zinc-600 dark:text-zinc-400 truncate mt-0.5">
                   {activeProfile
                     ? `Proj: ${activeProfile.projectId || "Unset"} • ${
                         activeProfile.fromEmail || "No sender email"
@@ -1464,7 +1511,7 @@ export default function CatalystConsole() {
                     setProfileToEdit(activeProfile);
                     setProfileModalOpen(true);
                   }}
-                  className="shrink-0 text-xs font-medium text-blue-400 hover:text-blue-300 transition"
+                  className="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
                 >
                   Edit Profile
                 </button>
@@ -1476,7 +1523,7 @@ export default function CatalystConsole() {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-medium text-zinc-300">
+                    <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                       Subject Line
                     </label>
                     <span className="text-[10px] font-mono text-zinc-500">
@@ -1494,7 +1541,7 @@ export default function CatalystConsole() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                    <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                       Sender Display Name
                     </label>
                     <input
@@ -1506,7 +1553,7 @@ export default function CatalystConsole() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                    <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                       Sender Override{" "}
                       <span className="text-zinc-500 font-normal">(Optional)</span>
                     </label>
@@ -1523,7 +1570,7 @@ export default function CatalystConsole() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                     Reply-To Address{" "}
                     <span className="text-zinc-500 font-normal">(Optional)</span>
                   </label>
@@ -1539,8 +1586,8 @@ export default function CatalystConsole() {
                 {/* HTML Content */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                      <FileCode2 className="w-3.5 h-3.5 text-zinc-400" />
+                    <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                      <FileCode2 className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
                       HTML Body
                     </label>
                     <div className="flex items-center gap-2.5">
@@ -1551,7 +1598,7 @@ export default function CatalystConsole() {
                             prev.trim() ? prev : STARTER_HTML_TEMPLATE
                           )
                         }
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-200 transition"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition"
                       >
                         <Sparkles className="w-3 h-3" />
                         Starter HTML
@@ -1559,7 +1606,7 @@ export default function CatalystConsole() {
                       <button
                         type="button"
                         onClick={() => setHtmlPreviewOpen(true)}
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         Preview Render
@@ -1578,14 +1625,14 @@ export default function CatalystConsole() {
                 {/* Recipients List */}
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                    <label className="text-xs font-medium text-zinc-300">
+                    <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                       Recipients Queue
                     </label>
                     <div className="flex items-center gap-2.5">
                       <button
                         type="button"
                         onClick={() => triggerListImport("email")}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-400 hover:text-blue-300 transition"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
                       >
                         <FileSpreadsheet className="w-3.5 h-3.5" />
                         Import TXT/CSV
@@ -1593,11 +1640,11 @@ export default function CatalystConsole() {
                       <button
                         type="button"
                         onClick={() => deduplicateList("email")}
-                        className="text-[11px] font-medium text-zinc-400 hover:text-zinc-200 transition"
+                        className="text-[11px] font-medium text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition"
                       >
                         Deduplicate
                       </button>
-                      <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300 tabular-nums">
+                      <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[11px] font-mono text-zinc-700 dark:text-zinc-300 tabular-nums">
                         {parsedEmailItems.length} valid
                       </span>
                     </div>
@@ -1618,7 +1665,7 @@ export default function CatalystConsole() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                    <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                       Default First Name
                     </label>
                     <input
@@ -1629,7 +1676,7 @@ export default function CatalystConsole() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                    <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                       Default Last Name
                     </label>
                     <input
@@ -1643,14 +1690,14 @@ export default function CatalystConsole() {
 
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                    <label className="text-xs font-medium text-zinc-300">
+                    <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                       Target Emails Queue
                     </label>
                     <div className="flex items-center gap-2.5">
                       <button
                         type="button"
                         onClick={() => triggerListImport("signup")}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-400 hover:text-blue-300 transition"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
                       >
                         <FileSpreadsheet className="w-3.5 h-3.5" />
                         Import TXT/CSV
@@ -1658,11 +1705,11 @@ export default function CatalystConsole() {
                       <button
                         type="button"
                         onClick={() => deduplicateList("signup")}
-                        className="text-[11px] font-medium text-zinc-400 hover:text-zinc-200 transition"
+                        className="text-[11px] font-medium text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition"
                       >
                         Deduplicate
                       </button>
-                      <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300 tabular-nums">
+                      <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[11px] font-mono text-zinc-700 dark:text-zinc-300 tabular-nums">
                         {parsedSignupItems.length} valid
                       </span>
                     </div>
@@ -1678,7 +1725,7 @@ export default function CatalystConsole() {
                   />
                   <p className="text-[11px] text-zinc-500 mt-1.5">
                     Format: one email per line, or{" "}
-                    <code className="font-mono text-zinc-400">
+                    <code className="font-mono text-zinc-700 dark:text-zinc-400">
                       email,FirstName,LastName
                     </code>
                     .
@@ -1691,11 +1738,11 @@ export default function CatalystConsole() {
             {currentTab === "users" && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                     Filter Loaded Users
                   </label>
                   <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Search className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
                       value={userSearch}
@@ -1708,7 +1755,7 @@ export default function CatalystConsole() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                    <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                       Records Per Page
                     </label>
                     <select
@@ -1722,7 +1769,7 @@ export default function CatalystConsole() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                    <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                       Current Page
                     </label>
                     <div className="flex items-center gap-1.5">
@@ -1732,7 +1779,7 @@ export default function CatalystConsole() {
                         onClick={() =>
                           fetchDirectoryUsers(usersPage - 1, usersPerPage)
                         }
-                        className="input-sharp px-2.5 hover:bg-zinc-900"
+                        className="input-sharp px-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-900"
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </button>
@@ -1745,7 +1792,7 @@ export default function CatalystConsole() {
                         onClick={() =>
                           fetchDirectoryUsers(usersPage + 1, usersPerPage)
                         }
-                        className="input-sharp px-2.5 hover:bg-zinc-900"
+                        className="input-sharp px-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-900"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -1859,7 +1906,7 @@ export default function CatalystConsole() {
               {/* Concurrency & Fault-Tolerance Controls */}
               <div className="panel-surface rounded-lg p-4 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
-                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                  <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
                     Inter-Request Delay (sec)
                   </label>
                   <input
@@ -1874,7 +1921,7 @@ export default function CatalystConsole() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-emerald-400/90 mb-1">
+                  <label className="block text-[11px] font-medium text-emerald-700 dark:text-emerald-400/90 mb-1">
                     Parallel Workers (1–25)
                   </label>
                   <input
@@ -1884,12 +1931,12 @@ export default function CatalystConsole() {
                     value={concurrency}
                     disabled={jobState !== "idle" || Number(delaySec) > 0}
                     onChange={(e) => setConcurrency(e.target.value)}
-                    className="input-sharp w-full font-mono text-xs tabular-nums border-emerald-500/30 text-emerald-300"
+                    className="input-sharp w-full font-mono text-xs tabular-nums border-emerald-600/35 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                  <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
                     Auto-Pause Error Threshold
                   </label>
                   <input
@@ -1906,19 +1953,19 @@ export default function CatalystConsole() {
               {/* Progress Bar & Throughput */}
               <div className="panel-surface rounded-lg px-4 py-3 space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-zinc-400">
-                    <Activity className="w-3.5 h-3.5 text-blue-400" />
-                    <span className="font-medium text-zinc-200">
+                  <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
+                    <Activity className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
                       Execution Progress
                     </span>
                     <span className="font-mono text-zinc-500 tabular-nums">
                       ({progressPct.toFixed(1)}%)
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 font-mono text-[11px] text-zinc-400 tabular-nums">
+                  <div className="flex items-center gap-4 font-mono text-[11px] text-zinc-500 dark:text-zinc-400 tabular-nums">
                     <span>
                       Throughput:{" "}
-                      <strong className="text-zinc-200">
+                      <strong className="text-zinc-900 dark:text-zinc-200">
                         {metrics.ratePerSec.toFixed(1)}/s
                       </strong>
                     </span>
@@ -1927,8 +1974,8 @@ export default function CatalystConsole() {
                       <strong
                         className={
                           successRatePct >= 95
-                            ? "text-emerald-400"
-                            : "text-amber-400"
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-amber-600 dark:text-amber-400"
                         }
                       >
                         {successRatePct}%
@@ -1936,10 +1983,10 @@ export default function CatalystConsole() {
                     </span>
                   </div>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-zinc-900 overflow-hidden">
+                <div className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-900 overflow-hidden">
                   <div
                     className={`h-full transition-all duration-300 ${
-                      jobState === "paused" ? "bg-amber-500" : "bg-blue-500"
+                      jobState === "paused" ? "bg-amber-500" : "bg-blue-600 dark:bg-blue-500"
                     }`}
                     style={{ width: `${progressPct}%` }}
                   />
@@ -1948,56 +1995,56 @@ export default function CatalystConsole() {
 
               {/* 6-Card Precision Telemetry Matrix */}
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-zinc-600">
+                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-zinc-400 dark:border-t-zinc-600">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                     Processed
                   </p>
-                  <p className="text-lg font-semibold font-mono text-zinc-100 mt-1 tabular-nums">
+                  <p className="text-lg font-semibold font-mono text-zinc-900 dark:text-zinc-100 mt-1 tabular-nums">
                     {metrics.processed}
                   </p>
                 </div>
 
-                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-blue-500/70">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-400">
+                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-blue-500/80 dark:border-t-blue-500/70">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                     Remaining
                   </p>
-                  <p className="text-lg font-semibold font-mono text-blue-300 mt-1 tabular-nums">
+                  <p className="text-lg font-semibold font-mono text-blue-700 dark:text-blue-300 mt-1 tabular-nums">
                     {metrics.remaining}
                   </p>
                 </div>
 
-                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-emerald-500/70">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-emerald-500/80 dark:border-t-emerald-500/70">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                     Succeeded
                   </p>
-                  <p className="text-lg font-semibold font-mono text-emerald-300 mt-1 tabular-nums">
+                  <p className="text-lg font-semibold font-mono text-emerald-700 dark:text-emerald-300 mt-1 tabular-nums">
                     {metrics.success}
                   </p>
                 </div>
 
-                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-rose-500/70">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-400">
+                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-rose-500/80 dark:border-t-rose-500/70">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">
                     Failed
                   </p>
-                  <p className="text-lg font-semibold font-mono text-rose-300 mt-1 tabular-nums">
+                  <p className="text-lg font-semibold font-mono text-rose-700 dark:text-rose-300 mt-1 tabular-nums">
                     {metrics.failed}
                   </p>
                 </div>
 
-                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-zinc-700">
+                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-zinc-400 dark:border-t-zinc-700">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                     Elapsed
                   </p>
-                  <p className="text-sm font-semibold font-mono text-zinc-200 mt-2 tabular-nums">
+                  <p className="text-sm font-semibold font-mono text-zinc-800 dark:text-zinc-200 mt-2 tabular-nums">
                     {formatHHMMSS(metrics.elapsedSec)}
                   </p>
                 </div>
 
-                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-amber-500/70">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                <div className="panel-surface rounded-lg p-3.5 border-t-2 border-t-amber-500/80 dark:border-t-amber-500/70">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                     Est. Left
                   </p>
-                  <p className="text-sm font-semibold font-mono text-amber-300 mt-2 tabular-nums">
+                  <p className="text-sm font-semibold font-mono text-amber-700 dark:text-amber-300 mt-2 tabular-nums">
                     {formatHHMMSS(metrics.remainingSec)}
                   </p>
                 </div>
@@ -2008,20 +2055,20 @@ export default function CatalystConsole() {
           {/* EVENT STREAM / USER DIRECTORY TABLE */}
           {currentTab !== "users" ? (
             <div className="panel-surface rounded-lg overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-800/90 bg-zinc-950/50 flex flex-wrap items-center justify-between gap-2">
+              <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800/90 bg-zinc-50 dark:bg-zinc-950/50 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-400" />
-                  <h2 className="text-xs font-semibold text-zinc-200">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                  <h2 className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
                     Diagnostic Event Stream
                   </h2>
-                  <div className="inline-flex rounded bg-zinc-900 p-0.5 border border-zinc-800 text-[11px]">
+                  <div className="inline-flex rounded bg-zinc-200/75 dark:bg-zinc-900 p-0.5 border border-zinc-300 dark:border-zinc-800 text-[11px]">
                     <button
                       type="button"
                       onClick={() => setLogMode("failures")}
                       className={`px-2 py-0.5 rounded transition ${
                         logMode === "failures"
-                          ? "bg-zinc-800 text-zinc-100 font-medium"
-                          : "text-zinc-500 hover:text-zinc-300"
+                          ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium shadow-sm"
+                          : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-300"
                       }`}
                     >
                       Failures Only
@@ -2031,8 +2078,8 @@ export default function CatalystConsole() {
                       onClick={() => setLogMode("all")}
                       className={`px-2 py-0.5 rounded transition ${
                         logMode === "all"
-                          ? "bg-zinc-800 text-zinc-100 font-medium"
-                          : "text-zinc-500 hover:text-zinc-300"
+                          ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium shadow-sm"
+                          : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-300"
                       }`}
                     >
                       All Events
@@ -2046,14 +2093,14 @@ export default function CatalystConsole() {
                       <button
                         type="button"
                         onClick={exportFailedTxt}
-                        className="px-2.5 py-1 rounded text-[11px] font-medium bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition"
+                        className="px-2.5 py-1 rounded text-[11px] font-medium bg-white hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-800 transition"
                       >
                         Export Failed
                       </button>
                       <button
                         type="button"
                         onClick={retryFailedBatch}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 transition"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-rose-500/10 hover:bg-rose-500/20 dark:bg-rose-500/15 dark:hover:bg-rose-500/25 text-rose-700 dark:text-rose-300 border border-rose-500/30 transition"
                       >
                         <RefreshCw className="w-3 h-3" />
                         Retry Failed ({failedItems.length})
@@ -2063,7 +2110,7 @@ export default function CatalystConsole() {
                   <button
                     type="button"
                     onClick={() => setLogs([])}
-                    className="px-2.5 py-1 rounded text-[11px] font-medium bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition"
+                    className="px-2.5 py-1 rounded text-[11px] font-medium bg-white hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 border border-zinc-300 dark:border-zinc-800 transition"
                   >
                     Clear Log
                   </button>
@@ -2072,7 +2119,7 @@ export default function CatalystConsole() {
 
               <div className="overflow-x-auto max-h-[480px]">
                 <table className="w-full text-left border-collapse text-xs">
-                  <thead className="bg-[#09090B] text-[10px] font-mono uppercase tracking-wider text-zinc-500 border-b border-zinc-800/90 sticky top-0">
+                  <thead className="bg-zinc-100 dark:bg-[#09090B] text-[10px] font-mono uppercase tracking-wider text-zinc-500 border-b border-zinc-200 dark:border-zinc-800/90 sticky top-0">
                     <tr>
                       <th className="py-2.5 px-3.5">Profile</th>
                       <th className="py-2.5 px-3.5">Target</th>
@@ -2081,7 +2128,7 @@ export default function CatalystConsole() {
                       <th className="py-2.5 px-3.5 text-center">Payload</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800/60 font-mono">
+                  <tbody className="divide-y divide-zinc-200/80 dark:divide-zinc-800/60 font-mono">
                     {logs.length === 0 ? (
                       <tr>
                         <td
@@ -2099,11 +2146,11 @@ export default function CatalystConsole() {
                           key={entry.id}
                           className={
                             entry.ok
-                              ? "hover:bg-zinc-900/40 text-zinc-300"
-                              : "bg-rose-950/10 hover:bg-rose-950/20 text-rose-200"
+                              ? "hover:bg-zinc-50 dark:hover:bg-zinc-900/40 text-zinc-800 dark:text-zinc-300"
+                              : "bg-rose-50/70 hover:bg-rose-50 dark:bg-rose-950/10 dark:hover:bg-rose-950/20 text-rose-900 dark:text-rose-200"
                           }
                         >
-                          <td className="py-2.5 px-3.5 text-zinc-400 whitespace-nowrap">
+                          <td className="py-2.5 px-3.5 text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                             {entry.profileName}
                           </td>
                           <td className="py-2.5 px-3.5 font-medium truncate max-w-[180px]">
@@ -2111,7 +2158,9 @@ export default function CatalystConsole() {
                           </td>
                           <td
                             className={`py-2.5 px-3.5 break-words ${
-                              entry.ok ? "text-emerald-400" : "text-rose-400"
+                              entry.ok
+                                ? "text-emerald-700 dark:text-emerald-400"
+                                : "text-rose-600 dark:text-rose-400"
                             }`}
                           >
                             {entry.details}
@@ -2123,7 +2172,7 @@ export default function CatalystConsole() {
                             <button
                               type="button"
                               onClick={() => setInspectedLog(entry)}
-                              className="inline-flex items-center justify-center p-1.5 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-blue-400 hover:text-blue-300 transition"
+                              className="inline-flex items-center justify-center p-1.5 rounded bg-white hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-800 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
                               title="Inspect raw JSON payload"
                             >
                               <Eye className="w-3.5 h-3.5" />
@@ -2139,13 +2188,13 @@ export default function CatalystConsole() {
           ) : (
             /* USER DIRECTORY TABLE */
             <div className="panel-surface rounded-lg overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-800/90 bg-zinc-950/50 flex items-center justify-between gap-2">
+              <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800/90 bg-zinc-50 dark:bg-zinc-950/50 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <FolderKanban className="w-4 h-4 text-blue-400" />
-                  <h2 className="text-xs font-semibold text-zinc-200">
+                  <FolderKanban className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <h2 className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
                     Catalyst Project Users
                   </h2>
-                  <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 tabular-nums">
+                  <span className="px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[11px] font-mono text-zinc-600 dark:text-zinc-400 tabular-nums">
                     {filteredUsers.length} shown
                   </span>
                 </div>
@@ -2156,7 +2205,7 @@ export default function CatalystConsole() {
 
               <div className="overflow-x-auto max-h-[580px]">
                 <table className="w-full text-left border-collapse text-xs">
-                  <thead className="bg-[#09090B] text-[10px] font-mono uppercase tracking-wider text-zinc-500 border-b border-zinc-800/90 sticky top-0">
+                  <thead className="bg-zinc-100 dark:bg-[#09090B] text-[10px] font-mono uppercase tracking-wider text-zinc-500 border-b border-zinc-200 dark:border-zinc-800/90 sticky top-0">
                     <tr>
                       <th className="py-2.5 px-3.5 w-9">
                         <input
@@ -2166,7 +2215,7 @@ export default function CatalystConsole() {
                             selectedUserIds.size === filteredUsers.length
                           }
                           onChange={toggleSelectAllUsers}
-                          className="rounded border-zinc-700 bg-zinc-900"
+                          className="rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
                         />
                       </th>
                       <th className="py-2.5 px-3.5">User / Email</th>
@@ -2175,14 +2224,14 @@ export default function CatalystConsole() {
                       <th className="py-2.5 px-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800/60">
+                  <tbody className="divide-y divide-zinc-200/80 dark:divide-zinc-800/60">
                     {usersLoading ? (
                       <tr>
                         <td
                           colSpan={5}
-                          className="py-16 text-center text-xs text-zinc-400"
+                          className="py-16 text-center text-xs text-zinc-500 dark:text-zinc-400"
                         >
-                          <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-400" />
+                          <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-600 dark:text-blue-400" />
                           Fetching users from Catalyst project...
                         </td>
                       </tr>
@@ -2213,7 +2262,7 @@ export default function CatalystConsole() {
                         return (
                           <tr
                             key={uid || email}
-                            className="hover:bg-zinc-900/40 transition-colors"
+                            className="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors"
                           >
                             <td className="py-2.5 px-3.5">
                               <input
@@ -2227,11 +2276,11 @@ export default function CatalystConsole() {
                                     return next;
                                   });
                                 }}
-                                className="rounded border-zinc-700 bg-zinc-900"
+                                className="rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
                               />
                             </td>
                             <td className="py-2.5 px-3.5">
-                              <p className="font-mono text-xs text-zinc-100 font-medium">
+                              <p className="font-mono text-xs text-zinc-900 dark:text-zinc-100 font-medium">
                                 {email}
                               </p>
                               {fullName && (
@@ -2240,7 +2289,7 @@ export default function CatalystConsole() {
                                 </p>
                               )}
                             </td>
-                            <td className="py-2.5 px-3.5 font-mono text-zinc-400">
+                            <td className="py-2.5 px-3.5 font-mono text-zinc-600 dark:text-zinc-400">
                               <button
                                 type="button"
                                 onClick={async () => {
@@ -2252,14 +2301,14 @@ export default function CatalystConsole() {
                                     // ignore
                                   }
                                 }}
-                                className="inline-flex items-center gap-1.5 hover:text-zinc-200 transition"
+                                className="inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-zinc-200 transition"
                                 title="Copy 64-bit User ID"
                               >
                                 <span>{uid}</span>
                                 {copiedId === uid ? (
-                                  <Check className="w-3 h-3 text-emerald-400" />
+                                  <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                                 ) : (
-                                  <Copy className="w-3 h-3 text-zinc-600" />
+                                  <Copy className="w-3 h-3 text-zinc-400 dark:text-zinc-600" />
                                 )}
                               </button>
                             </td>
@@ -2267,8 +2316,8 @@ export default function CatalystConsole() {
                               <span
                                 className={`inline-flex px-2 py-0.5 rounded text-[10px] font-mono uppercase border ${
                                   isConfirmed
-                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
-                                    : "bg-zinc-900 text-zinc-400 border-zinc-800"
+                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
+                                    : "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800"
                                 }`}
                               >
                                 {user.status || (isConfirmed ? "CONFIRMED" : "PENDING")}
@@ -2285,7 +2334,7 @@ export default function CatalystConsole() {
                                       payload: user,
                                     })
                                   }
-                                  className="p-1.5 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-blue-400 transition"
+                                  className="p-1.5 rounded bg-white hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-800 text-blue-600 dark:text-blue-400 transition"
                                   title="Inspect user JSON"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
@@ -2294,7 +2343,7 @@ export default function CatalystConsole() {
                                   type="button"
                                   disabled={isDeleting}
                                   onClick={() => handleDeleteSingleUser(uid)}
-                                  className="p-1.5 rounded bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-rose-400 disabled:opacity-50 transition"
+                                  className="p-1.5 rounded bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-rose-600 dark:text-rose-400 disabled:opacity-50 transition"
                                   title="Delete user"
                                 >
                                   {isDeleting ? (
